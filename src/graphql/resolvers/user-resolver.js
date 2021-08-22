@@ -41,13 +41,13 @@ exports.getAllUsers = async (parent, args, { request }, info) => {
 
 exports.getUserById = async (parent, { id }, { request }, info) => {
   try {
+    await authenticate(request, ["admin"], prisma);
     const user = await prisma.user.findFirst({
-      where: { id },
+      where: { id, isDeleted: false },
       include: { posts: true, comments: true },
     });
 
     if (!user) throw new Error('No such user belongs with given id!');
-
     return user;
   } catch (error) {
     throw error;
@@ -56,7 +56,21 @@ exports.getUserById = async (parent, { id }, { request }, info) => {
 
 exports.updateUser = async (parent, { id, payload }, { request }, info) => {
   try {
+    const isUserExists = await prisma.user.count({ where: { id, isDeleted: false }});
+    if (!isUserExists)  throw new Error("No such user exists!");
+    if (payload.email) {
+      const isEmailExists = await prisma.user.count({ where : { isDeleted: false, email: payload.email, id: { not : id } }});
+      if (isEmailExists)
+        throw new Error("Email is already in use!");
+    }
+    const user = await prisma.user.update({ where: { id }, data: payload });
+    return user;
   } catch (error) {
     throw error;
   }
 };
+
+
+exports.deleteUser = async (parent, { id }, { request }, info) => {
+  
+}
