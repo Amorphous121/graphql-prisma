@@ -42,16 +42,17 @@ model User {
 }
 
 model Post {
-  id         Int      @id @default(autoincrement())
-  title      String   @db.Text
-  content    String   @db.LongText
+  id         Int       @id @default(autoincrement())
+  title      String    @db.Text
+  content    String    @db.LongText
   createdBy  Int
-  creator    User     @relation("User_Post_Records", fields: [createdBy], references: [id])
+  creator    User      @relation("User_Post_Records", fields: [createdBy], references: [id])
+  comments   Comment[] @relation("Post_Comment_Record")
   deletedBy  Int?
-  DELETED_BY User?    @relation("User_Post_Deletions", fields: [deletedBy], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  isDeleted  Boolean  @default(false)
+  DELETED_BY User?     @relation("User_Post_Deletions", fields: [deletedBy], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  isDeleted  Boolean   @default(false)
 
   @@map("posts")
 }
@@ -61,6 +62,8 @@ model Comment {
   comment    String   @db.MediumText
   createdBy  Int
   creator    User     @relation("User_Comment_Records", fields: [createdBy], references: [id])
+  createdOn  Int
+  CREATED_ON Post     @relation("Post_Comment_Record", fields: [createdOn], references: [id])
   deletedBy  Int?
   DELETED_BY User?    @relation("User_Comment_Deletions", fields: [deletedBy], references: [id])
   createdAt  DateTime @default(now())
