@@ -1,6 +1,7 @@
 type Query {
   login(payload: LoginInput): String!
   getAllUsers: [User!]!
+  getUserById(id: Int): User!
 }
 
 type Mutation {

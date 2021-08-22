@@ -3,7 +3,8 @@ const AuthResolver = require('./auth-resolver');
 module.exports = {
   Query: {
     login: AuthResolver.login,
-    getAllUsers: UserResolver.getAllUsers
+    getAllUsers: UserResolver.getAllUsers,
+    getUserById: UserResolver.getUserById,
   },
 
   Mutation: {

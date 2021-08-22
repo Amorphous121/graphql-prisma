@@ -26,15 +26,11 @@ const graphqlConfig = {
   cors: { origin: '*' },
 };
 
-server.use((err, req, res, next) => {
-  console.log(err.message);
-})
-
 server.start(graphqlConfig, () => {
   console.log(
     'Server is up & running at ' +
       chalk.bgBlueBright.whiteBright(
-        '  http://localhost:' + server.options.port + '/graphql'
+        '  http://localhost:' + server.options.port + '/graphql  '
       )
   );
 });
