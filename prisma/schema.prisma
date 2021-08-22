@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(10)
+  users     User[]   @relation("Created_Users")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id                        Int       @id @default(autoincrement())
+  firstName                 String    @db.VarChar(30)
+  lastName                  String    @db.VarChar(30)
+  email                     String    @db.VarChar(40)
+  password                  String    @db.Text
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  role                      Role?     @relation("Created_Users", fields: [roleId], references: [id])
+  roleId                    Int?
+  posts                     Post[]    @relation("User_Post_Records")
+  posts_deletion_records    Post[]    @relation("User_Post_Deletions")
+  comments                  Comment[] @relation("User_Comment_Records")
+  comments_deletion_records Comment[] @relation("User_Comment_Deletions")
+  isDeleted                 Boolean   @default(false)
+  deletedAt                 DateTime?
+  deletedBy                 Int?
+  DELETED_BY                User?     @relation("User_Deletion_History", fields: [deletedBy], references: [id])
+  userDeletionHistory       User[]    @relation("User_Deletion_History")
+
+  @@map("users")
+}
+
+model Post {
+  id         Int      @id @default(autoincrement())
+  title      String   @db.Text
+  content    String   @db.LongText
+  createdBy  Int
+  creator    User     @relation("User_Post_Records", fields: [createdBy], references: [id])
+  deletedBy  Int?
+  DELETED_BY User?    @relation("User_Post_Deletions", fields: [deletedBy], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  isDeleted  Boolean  @default(false)
+
+  @@map("posts")
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  comment    String   @db.MediumText
+  createdBy  Int
+  creator    User     @relation("User_Comment_Records", fields: [createdBy], references: [id])
+  deletedBy  Int?
+  DELETED_BY User?    @relation("User_Comment_Deletions", fields: [deletedBy], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  isDeleted  Boolean  @default(false)
+
+  @@map("comments")
+}

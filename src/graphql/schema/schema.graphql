@@ -1,0 +1,60 @@
+type Query {
+  login(payload: LoginInput): String!
+  getAllUsers: [User!]!
+}
+
+type Mutation {
+  createUser(payload: UserInput): User!
+}
+
+type User {
+  id: Int!
+  firstName: String!
+  lastName: String!
+  email: String!
+  posts: [Post!]!
+  comments: [Comment]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Post {
+  id: Int!
+  title: String!
+  content: String!
+  comments: [Comment!]!
+  createdBy: User!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Comment {
+  id: Int!
+  comment: String!
+  post: Post!
+  createdBy: User!
+  createdAt: String!
+  updatedAt: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input UserInput {
+  firstName: String!
+  lastName: String!
+  email: String!
+  password: String!
+}
+
+input PostInput {
+  title: String!
+  content: String!
+}
+
+input CommentInput {
+  postId: Int!
+  comment: String!
+}
