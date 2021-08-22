@@ -28,7 +28,7 @@ exports.createUser = async (parent, { payload }, { request }, info) => {
 
 exports.getAllUsers = async (parent, args, { request }, info) => {
   try {
-    await authenticate(request, ["admin"], prisma);
+    await authenticate(request, ['admin'], prisma);
     const users = await prisma.user.findMany({
       where: { isDeleted: false },
       include: { posts: true, comments: true },
@@ -41,7 +41,7 @@ exports.getAllUsers = async (parent, args, { request }, info) => {
 
 exports.getUserById = async (parent, { id }, { request }, info) => {
   try {
-    await authenticate(request, ["admin"], prisma);
+    await authenticate(request, ['admin'], prisma);
     const user = await prisma.user.findFirst({
       where: { id, isDeleted: false },
       include: { posts: true, comments: true },
@@ -56,12 +56,13 @@ exports.getUserById = async (parent, { id }, { request }, info) => {
 
 exports.updateUser = async (parent, { id, payload }, { request }, info) => {
   try {
-    const isUserExists = await prisma.user.count({ where: { id, isDeleted: false }});
-    if (!isUserExists)  throw new Error("No such user exists!");
+    const reqUser = await authenticate(request, ['user'], prisma);
+    if (reqUser.id !== id) throw new Error("You can't update other's details!");
     if (payload.email) {
-      const isEmailExists = await prisma.user.count({ where : { isDeleted: false, email: payload.email, id: { not : id } }});
-      if (isEmailExists)
-        throw new Error("Email is already in use!");
+      const isEmailExists = await prisma.user.count({
+        where: { isDeleted: false, email: payload.email, id: { not: id } },
+      });
+      if (isEmailExists) throw new Error('Email is already in use!');
     }
     const user = await prisma.user.update({ where: { id }, data: payload });
     return user;
@@ -70,7 +71,36 @@ exports.updateUser = async (parent, { id, payload }, { request }, info) => {
   }
 };
 
-
 exports.deleteUser = async (parent, { id }, { request }, info) => {
-  
-}
+  try {
+    const reqUser = await authenticate(req, ['admin', 'user'], prisma);
+    if (reqUser.id === id || reqUser.role === 'admin') {
+      const isUserExists = await prisma.user.count({
+        where: { id, isDeleted: false },
+      });
+      if (!isUserExists) throw new Error('No such user belongs to given id!');
+      await prisma.post.updateMany({
+        where: { createdBy: id, isDeleted: false },
+        data: { isDeleted: true, deletedBy: reqUser.id, deletedAt: new Date() },
+      });
+      const postList = await prisma.user.findUnique({ where: { id } }).posts();
+      const list = postList.map((post) => post.id);
+      await prisma.comment.updateMany({
+        where: {
+          OR: [
+            { createdBy: id, isDeleted: false },
+            { createdOn: { in: list } },
+          ],
+        },
+      });
+      await prisma.user.update({
+        where: { id },
+        data: { isDeleted: true, deletedBy: reqUser.id, deletedAt: new Date() },
+      });
+      return 'User Deleted Successfully';
+    } else
+      throw new Error('You dont have sufficient right to delete other users!');
+  } catch (error) {
+    throw error;
+  }
+};
